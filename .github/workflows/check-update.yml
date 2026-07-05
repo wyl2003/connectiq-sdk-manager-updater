@@ -40,7 +40,8 @@ jobs:
         run: |
           cd /tmp/aur-repo
           echo "CURRENT_VERSION=$(sed -n 's/pkgver=\(.*\)/\1/p' PKGBUILD)" >> $GITHUB_ENV
-          echo "CURRENT_SHA256=$(sed -n \"s/.*sha256sums='\([^']*\)'.*/\1/p\" PKGBUILD)" >> $GITHUB_ENV
+          SHA256=$(sed -n "s/.*sha256sums='\([^']*\)'.*/\1/p" PKGBUILD)
+          echo "CURRENT_SHA256=$SHA256" >> $GITHUB_ENV
 
       - name: Scrape latest SDK version from Garmin
         id: garmin
