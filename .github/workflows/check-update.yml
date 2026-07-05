@@ -25,17 +25,15 @@ jobs:
           mkdir -p ~/.ssh
           echo "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur_key
           chmod 600 ~/.ssh/aur_key
-          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
-          echo "Host aur.archlinux.org" > ~/.ssh/config
-          echo "  IdentityFile ~/.ssh/aur_key" >> ~/.ssh/config
-          echo "  User aur" >> ~/.ssh/config
 
       - name: Clone AUR repo
+        env:
+          GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/aur_key"
         run: |
           git clone aur@aur.archlinux.org:connectiq-sdk-manager.git /tmp/aur-repo
           cd /tmp/aur-repo
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "Yile Wang"
+          git config user.email "git-wyl@wyls.top"
 
       - name: Get current PKGBUILD values
         id: current
@@ -94,6 +92,8 @@ jobs:
 
       - name: Commit and push to AUR
         if: env.UPDATE_NEEDED == 'true'
+        env:
+          GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/aur_key"
         run: |
           cd /tmp/aur-repo
           git add PKGBUILD .SRCINFO
