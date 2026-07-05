@@ -39,14 +39,15 @@ jobs:
         id: current
         run: |
           cd /tmp/aur-repo
-          echo "CURRENT_VERSION=$(grep -oP 'pkgver=\K.*' PKGBUILD)" >> $GITHUB_ENV
-          echo "CURRENT_SHA256=$(grep -oP "sha256sums='\K[^']*" PKGBUILD)" >> $GITHUB_ENV
+          echo "CURRENT_VERSION=$(sed -n 's/pkgver=\(.*\)/\1/p' PKGBUILD)" >> $GITHUB_ENV
+          echo "CURRENT_SHA256=$(sed -n \"s/.*sha256sums='\([^']*\)'.*/\1/p\" PKGBUILD)" >> $GITHUB_ENV
 
       - name: Scrape latest SDK version from Garmin
         id: garmin
         run: |
           VERSION=$(curl -sL "https://developer.garmin.com/connect-iq/sdk/" | \
-            grep -oP 'Connect IQ \K\d+\.\d+\.\d+' | head -1)
+            grep -oE 'Connect IQ [0-9]+\.[0-9]+\.[0-9]+' | head -1 | \
+            sed 's/Connect IQ //')
           echo "SDK_VERSION=$VERSION" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
