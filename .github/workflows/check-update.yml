@@ -47,8 +47,8 @@ jobs:
         id: garmin
         run: |
           PAGE=$(curl -sL "https://developer.garmin.com/connect-iq/sdk/")
-          echo "$PAGE" | grep -o 'Connect IQ [0-9.]*' | head -5
-          SDK_VERSION=$(echo "$PAGE" | grep -o 'Connect IQ [0-9.]*' | head -1 | grep -o '[0-9.]*')
+          # 从 HTML 中提取 "Connect IQ X.Y.Z" 版本号
+          SDK_VERSION=$(echo "$PAGE" | grep -oP 'Connect IQ\s+\d+\.\d+\.\d+' | head -1 | grep -oP '\d+\.\d+\.\d+')
           echo "SDK_VERSION=$SDK_VERSION" >> $GITHUB_ENV
           echo "version=$SDK_VERSION" >> $GITHUB_OUTPUT
 
@@ -64,8 +64,11 @@ jobs:
       - name: Compare and decide
         id: check
         run: |
+          if [ -z "$SDK_VERSION" ]; then
+            echo "❌ Failed to scrape Garmin SDK version from website"
+            exit 1
+          fi
           if [ "$NEW_SHA256" != "$CURRENT_SHA256" ]; then
-            # 哈希变了 → 二进制有变动，需要人工审查
             echo "❌ SDK Manager binary hash changed!"
             echo "   Old SHA256: $CURRENT_SHA256"
             echo "   New SHA256: $NEW_SHA256"
@@ -74,7 +77,6 @@ jobs:
             echo "Manual review required: check deps, patchelf, etc., then update AUR."
             exit 1
           elif [ "$SDK_VERSION" != "$CURRENT_VERSION" ]; then
-            # 哈希没变，仅版本号更新 → 自动推进
             echo "UPDATE_NEEDED=true" >> $GITHUB_ENV
             echo "✅ Version bump: $CURRENT_VERSION → $SDK_VERSION"
           else
@@ -87,9 +89,9 @@ jobs:
         run: |
           cd /tmp/aur-repo
           sed -i "s/pkgver=.*/pkgver=$SDK_VERSION/" PKGBUILD
-          # hash 没变，不用改 sha256sums
           sed -i "s/pkgrel=.*/pkgrel=1/" PKGBUILD
-          makepkg --printsrcinfo > .SRCINFO
+          useradd -m builder
+          su builder -c "cd /tmp/aur-repo && makepkg --printsrcinfo > .SRCINFO"
           echo "✅ PKGBUILD and .SRCINFO updated"
 
       - name: Commit and push to AUR
