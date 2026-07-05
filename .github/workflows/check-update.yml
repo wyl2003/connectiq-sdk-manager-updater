@@ -39,18 +39,18 @@ jobs:
         id: current
         run: |
           cd /tmp/aur-repo
-          echo "CURRENT_VERSION=$(sed -n 's/pkgver=\(.*\)/\1/p' PKGBUILD)" >> $GITHUB_ENV
-          SHA256=$(sed -n "s/.*sha256sums='\([^']*\)'.*/\1/p" PKGBUILD)
-          echo "CURRENT_SHA256=$SHA256" >> $GITHUB_ENV
+          echo "CURRENT_VERSION=$(grep ^pkgver= PKGBUILD | cut -d= -f2)" >> $GITHUB_ENV
+          CURRENT_SHA256=$(awk -F"'" '/^sha256sums=/{print $2}' PKGBUILD)
+          echo "CURRENT_SHA256=$CURRENT_SHA256" >> $GITHUB_ENV
 
       - name: Scrape latest SDK version from Garmin
         id: garmin
         run: |
-          VERSION=$(curl -sL "https://developer.garmin.com/connect-iq/sdk/" | \
-            grep -oE 'Connect IQ [0-9]+\.[0-9]+\.[0-9]+' | head -1 | \
-            sed 's/Connect IQ //')
-          echo "SDK_VERSION=$VERSION" >> $GITHUB_ENV
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          PAGE=$(curl -sL "https://developer.garmin.com/connect-iq/sdk/")
+          echo "$PAGE" | grep -o 'Connect IQ [0-9.]*' | head -5
+          SDK_VERSION=$(echo "$PAGE" | grep -o 'Connect IQ [0-9.]*' | head -1 | grep -o '[0-9.]*')
+          echo "SDK_VERSION=$SDK_VERSION" >> $GITHUB_ENV
+          echo "version=$SDK_VERSION" >> $GITHUB_OUTPUT
 
       - name: Download SDK Manager & compute SHA256
         id: download
