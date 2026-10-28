@@ -90,6 +90,7 @@ jobs:
           sed -i "s/pkgver=.*/pkgver=$SDK_VERSION/" PKGBUILD
           sed -i "s/pkgrel=.*/pkgrel=1/" PKGBUILD
           useradd -m builder
+          chown -R builder:builder /tmp/aur-repo
           su builder -c "cd /tmp/aur-repo && makepkg --printsrcinfo > .SRCINFO"
           echo "✅ PKGBUILD and .SRCINFO updated"
 
